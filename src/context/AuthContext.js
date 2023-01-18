@@ -1,4 +1,5 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useEffect } from "react";
+import { projectAuth } from "../firebase/config";
 
 export const AuthContext = createContext();
 
@@ -9,6 +10,8 @@ export const authReducer = (state, action) => {
       return { ...state, user: action.payload }; //This update the state (the user state which is null)
     case "LOGOUT":
       return { ...state, user: null };
+    case "AUTH_IS_READY":
+      return { ...state, user: action.payload, authIsReady: true }; 
     default:
       return state;
   }
@@ -17,7 +20,16 @@ export const authReducer = (state, action) => {
 export const AuthContextProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, {
     user: null,
+    authIsReady: false,
   });
+
+  useEffect(() => {
+    // Once we unsub, the function will not be fired or called
+    const unsub = projectAuth.onAuthStateChanged((user) => {
+      dispatch({ type: "AUTH_IS-READY", payload: user });
+      unsub();
+    });
+  }, []);
 
   console.log("AuthContext state:", state);
 
